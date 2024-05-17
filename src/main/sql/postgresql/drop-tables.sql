@@ -1,0 +1,13 @@
+ALTER TABLE "Organizations" DROP CONSTRAINT IF EXISTS "Organizations_fk0";
+ALTER TABLE "Organizations" DROP CONSTRAINT IF EXISTS "Organizations_fk1";
+ALTER TABLE "Organizations" DROP CONSTRAINT IF EXISTS "Organizations_fk2";
+ALTER TABLE "Organizations" DROP CONSTRAINT IF EXISTS "Organizations_fk3";
+
+
+
+
+DROP TABLE IF EXISTS "Organizations" CASCADE;
+DROP TABLE IF EXISTS "OrganizationTypes" CASCADE;
+DROP TABLE IF EXISTS "Addresses" CASCADE;
+DROP TABLE IF EXISTS "Coordinates" CASCADE;
+DROP TABLE IF EXISTS "Users" CASCADE;
