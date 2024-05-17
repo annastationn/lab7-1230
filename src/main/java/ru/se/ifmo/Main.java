@@ -1,6 +1,7 @@
 package ru.se.ifmo;
 
 
+import java.util.Locale;
 import ru.se.ifmo.models.User;
 import ru.se.ifmo.modules.CommandHandler;
 import ru.se.ifmo.modules.ConsoleApp;
@@ -20,6 +21,8 @@ import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
+        Locale.setDefault(Locale.US);
+
         Properties properties = new Properties();
         Connection connection;
         String dbms;
@@ -108,6 +111,7 @@ public class Main {
                 if (user == null) {
                     System.out.println("Введены неверные данные попробуйте еще раз или зарегистрируйте нового пользователя");
                 } else {
+                    user.setPassword(MD2Encoder.encode(password));
                     System.out.printf("Вы успешно авторизовались под юзернеймом - %s. Вам открыт доступ к программе%n", user.getUsername());
                     break;
                 }
@@ -129,7 +133,7 @@ public class Main {
                 }
                 user = new User();
                 user.setUsername(username);
-                user.setPassword(password);
+                user.setPassword(MD2Encoder.encode(password));
                 usersTable.insert(user);
                 if (user.getId() != null && user.getId() != 0) {
                     System.out.printf("Поздравляем! Вы успешно зарегистрировались под юзернеймоим - %s. Вам успешно открыт доступ к программе.%n", user.getUsername());

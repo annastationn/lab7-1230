@@ -27,7 +27,6 @@ public class OrganizationsTable extends SQLTable<Organization> {
         String insertQuery = "INSERT INTO \"Organizations\" (name, coordinates_id, creation_date, annual_turnover, type_id, address_id, owner_id) " +
                              "VALUES ('%s', %d, '%s', %f, %d, %d, %d) RETURNING id;".formatted(entity.getName(), entity.getCoordinates().getId(),
                                      entity.getCreationDate(), entity.getAnnualTurnover(), entity.getType().ordinal()+1, entity.getOfficialAddress().getId(), user.getId());
-
         try (Statement stmt = connection.createStatement()) {
             ResultSet rs = stmt.executeQuery(insertQuery);
             while(rs.next()) {

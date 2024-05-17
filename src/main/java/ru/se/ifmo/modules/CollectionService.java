@@ -17,9 +17,9 @@ import static ru.se.ifmo.models.OrganizationType.*;
 
 public class CollectionService {
     private User user;
-    private Connection connection;
-    private String dbms;
-    private Date initializationDate;
+    private final Connection connection;
+    private final String dbms;
+    private final Date initializationDate;
     protected LinkedHashMap<Long, Organization> collection;
 
     protected Scanner inputScanner;
@@ -36,19 +36,47 @@ public class CollectionService {
         }
     }
 
+    private Long getMaxKey() {
+        Long maxKey = 0L;
+        for (Map.Entry<Long, Organization> organizationEntry : collection.entrySet()) {
+            if (organizationEntry.getKey() > maxKey) {
+                maxKey = organizationEntry.getKey();
+            }
+        }
+        return maxKey;
+    }
+
     public void addElement(Long key) {
         OrganizationsTable organizationsTable = new OrganizationsTable(connection, dbms, user);
         if (!collection.containsKey(key)) {
-            Organization newElement = createElement();
-            organizationsTable.insert(newElement);
-            if (newElement.getId() != null && newElement.getId() != 0) {
-                collection.put(key, newElement);
-                System.out.println("Элемент успешно добавлен");
+            if (key != getMaxKey() + 1) {
+                System.out.println("insert может быть применен только для добавления следущего по номеру ключа " +
+                                   "или вставки внутри между существующих ключей");
             } else {
-                System.out.println("Произошла ошибка при добавлении элемента");
+                Organization newElement = createElement();
+                organizationsTable.insert(newElement);
+                if (newElement.getId() != null && newElement.getId() != 0) {
+                    collection.put(key, newElement);
+                    System.out.println("Элемент успешно добавлен");
+                } else {
+                    System.out.println("Произошла ошибка при добавлении элемента");
+                }
             }
         } else {
-            System.out.println("Элемент с заданым ключом уже есть в коллекции! Чтобы добавить элемент с таким ключом сначала удалите старый элемент");
+            for (Map.Entry<Long, Organization> organizationEntry : ((LinkedHashMap<Long, Organization>) collection.clone()).entrySet()) {
+                if (organizationEntry.getKey() >= key) {
+                    collection.remove(organizationEntry.getKey());
+                    collection.put(organizationEntry.getKey() + 1, organizationEntry.getValue());
+                }
+            }
+                Organization newElement = createElement();
+                organizationsTable.insert(newElement);
+                if (newElement.getId() != null && newElement.getId() != 0) {
+                    collection.put(key, newElement);
+                    System.out.println("Элемент успешно добавлен");
+                } else {
+                    System.out.println("Произошла ошибка при добавлении элемента");
+                }
         }
     }
 
@@ -104,6 +132,13 @@ public class CollectionService {
         OrganizationsTable organizationsTable = new OrganizationsTable(connection, dbms, user);
         organizationsTable.delete(collection.get(key));
         collection.remove(key);
+        for (Map.Entry<Long, Organization> organizationEntry : ((LinkedHashMap<Long, Organization>) collection.clone()).entrySet()) {
+            if (organizationEntry.getKey() > key) {
+                collection.remove(organizationEntry.getKey());
+                collection.put(organizationEntry.getKey()-1, organizationEntry.getValue());
+            }
+        }
+
         System.out.println("Элемент с key " + key + " успешно удалён");
     }
 
@@ -113,7 +148,11 @@ public class CollectionService {
     public void clear(){
         OrganizationsTable organizationsTable = new OrganizationsTable(connection, dbms, user);
         organizationsTable.deleteAll();
-        collection.clear();
+        for (Map.Entry<Long, Organization> map: ((LinkedHashMap<Long, Organization>) collection.clone()).entrySet()) {
+            if (map.getValue().getUser().equals(user)) {
+                removeKey(map.getKey());
+            }
+        }
         System.out.println("Все элементы принадлежащие вам успешно удалены");
     }
 
@@ -123,7 +162,7 @@ public class CollectionService {
         for (Map.Entry<Long,Organization> set : collection.entrySet()) {
             if (ref.compareTo(set.getValue()) > 0 && set.getValue().getUser().equals(user)) {
                 organizationsTable.delete(set.getValue());
-                collection.remove(set.getKey());
+                removeKey(set.getKey());
             }
         }
     }
@@ -134,7 +173,7 @@ public class CollectionService {
         for (Map.Entry<Long, Organization> set : collection.entrySet()){
             if (set.getKey() > key && set.getValue().getUser().equals(user)) {
                 organizationsTable.delete(set.getValue());
-                collection.remove(set.getKey());
+                removeKey(set.getKey());
                 }
                 counter++;
         }

@@ -19,9 +19,8 @@ public class UsersTable extends SQLTable<User> {
 
     @Override
     public void insert(User entity) {
-        String insertQuery = "INSERT INTO \"Users\" (username, password) VALUES ('%s', '%s') RETURNING id;".formatted(entity.getUsername(), MD2Encoder.encode(entity.getPassword()));
+        String insertQuery = "INSERT INTO \"Users\" (username, password) VALUES ('%s', '%s') RETURNING id;".formatted(entity.getUsername(), entity.getPassword());
         try (Statement stmt = connection.createStatement()) {
-            System.out.println(insertQuery);
             ResultSet rs = stmt.executeQuery(insertQuery);
             while(rs.next()) {
                 entity.setId((long) rs.getInt("id"));
