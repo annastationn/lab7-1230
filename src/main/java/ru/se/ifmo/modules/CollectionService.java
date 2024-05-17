@@ -31,8 +31,10 @@ public class CollectionService {
         collection = new LinkedHashMap<>();
         this.initializationDate = new Date();
         OrganizationsTable organizationsTable = new OrganizationsTable(connection, dbms, user);
+        Long lastKey = 1L;
         for (Organization organization : organizationsTable.getOrganizations()) {
-            collection.put(organization.getId(), organization);
+            collection.put(lastKey, organization);
+            lastKey++;
         }
     }
 
@@ -131,7 +133,6 @@ public class CollectionService {
         }
         OrganizationsTable organizationsTable = new OrganizationsTable(connection, dbms, user);
         organizationsTable.delete(collection.get(key));
-        collection.remove(key);
         for (Map.Entry<Long, Organization> organizationEntry : ((LinkedHashMap<Long, Organization>) collection.clone()).entrySet()) {
             if (organizationEntry.getKey() > key) {
                 collection.remove(organizationEntry.getKey());
@@ -143,16 +144,24 @@ public class CollectionService {
     }
 
 
-
+    private void resolveKeys() {
+        Long lastKey = 1L;
+        for (Map.Entry<Long, Organization> map: ((LinkedHashMap<Long, Organization>) collection.clone()).entrySet()) {
+            collection.remove(map.getKey());
+            collection.put(lastKey, map.getValue());
+            lastKey++;
+        }
+    }
 
     public void clear(){
         OrganizationsTable organizationsTable = new OrganizationsTable(connection, dbms, user);
         organizationsTable.deleteAll();
         for (Map.Entry<Long, Organization> map: ((LinkedHashMap<Long, Organization>) collection.clone()).entrySet()) {
             if (map.getValue().getUser().equals(user)) {
-                removeKey(map.getKey());
+                collection.remove(map.getKey());
             }
         }
+        resolveKeys();
         System.out.println("Все элементы принадлежащие вам успешно удалены");
     }
 
