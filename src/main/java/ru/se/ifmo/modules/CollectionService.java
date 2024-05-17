@@ -65,10 +65,11 @@ public class CollectionService {
                 }
             }
         } else {
+            LinkedHashMap<Long, Organization> organizationLinkedHashMap = new LinkedHashMap<>();
             for (Map.Entry<Long, Organization> organizationEntry : ((LinkedHashMap<Long, Organization>) collection.clone()).entrySet()) {
                 if (organizationEntry.getKey() >= key) {
                     collection.remove(organizationEntry.getKey());
-                    collection.put(organizationEntry.getKey() + 1, organizationEntry.getValue());
+                    organizationLinkedHashMap.put(organizationEntry.getKey() + 1, organizationEntry.getValue());
                 }
             }
                 Organization newElement = createElement();
@@ -76,6 +77,7 @@ public class CollectionService {
                 if (newElement.getId() != null && newElement.getId() != 0) {
                     collection.put(key, newElement);
                     System.out.println("Элемент успешно добавлен");
+                    collection.putAll(organizationLinkedHashMap);
                 } else {
                     System.out.println("Произошла ошибка при добавлении элемента");
                 }
