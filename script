@@ -1,0 +1,11 @@
+update 1
+remove_key 3
+clear
+save
+remove_lower
+history
+remove_greater_key 1
+min_by_name
+filter_greater_than_type TRUST
+print_unique_annual_turnover
+exit
