@@ -1,14 +1,12 @@
 package ru.se.ifmo.module;
 
-import ru.se.ifmo.exception.ScriptRecursionException;
 import ru.se.ifmo.model.OrganizationType;
 import ru.se.ifmo.model.User;
 
-import java.io.FileNotFoundException;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 import static java.lang.Long.parseLong;
@@ -134,66 +132,31 @@ public class CommandHandler {
     }
 
     public void executeScript (String path) {
-        if (path.isBlank()) {
-            System.out.println("Неверные аргументы команды"); //illegal args exception
-        } else {
-            try {
-                Path pathToScript = Paths.get(path);
-                PromptScanner.setUserScanner(new Scanner(pathToScript));
-                Scanner scriptScanner = PromptScanner.getUserScanner();
-
-                Path scriptFile = pathToScript.getFileName();
-                if (!scriptScanner.hasNext()) {throw  new NoSuchElementException();}
-                scriptsName.put(scriptFile.toString(), true);
-                do {
-                    var command = "";
-                    var arguments = "";
-                    String [] input = (scriptScanner.nextLine() + " ").trim().split(" ", 2);
-                    if (input.length == 2){
-                        arguments = input[1].trim();
-                    }
-                    command = input[0].trim();
-                    while (scriptScanner.hasNextLine() && command.isEmpty()) {
-                        input = (scriptScanner.nextLine() + " ").trim().split(" ", 2);
-                        if (input.length == 2) {
-                            arguments = input[1].trim();
-                        }
-                        command = input[0].trim();
-                    }
-                    if (ConsoleApp.commandList.containsKey(command)) {
-                        if (command.equalsIgnoreCase("executeScript")) {
-                            Path scriptNameFromArgument = Paths.get(arguments).getFileName();
-                            if (scriptsName.containsKey(scriptNameFromArgument)) {
-                                throw new ScriptRecursionException("Один и тот же скрипт не может выполняться рекурсивно");
-                            }
-                            ConsoleApp.commandList.get("executeScript").execute(arguments);
-                        }
-                        else {                        ConsoleApp.commandList.get(command).execute(arguments);
-                            System.out.println("Команда" + command + "выполнена успешно");
-                        }
-                    } else {
-                        System.out.println("Неизвестная команда. Попроюуй ввести ещё раз");
-                    }
-                } while (scriptScanner.hasNextLine());
-                scriptsName.remove(scriptFile);
-                PromptScanner.setUserScanner(new Scanner(System.in));
-                System.out.println("Скрипт" + scriptFile + "успешно выполнен");
-
-            } catch (FileNotFoundException e) {
-                System.out.println("Файл" + path + "не найден");
-            } catch (NoSuchElementException e) {
-                System.out.println("Файл" + path + "пуст");
-            } catch (IllegalStateException e) {
-                System.out.println("Непредвиденная ошибка");
-            } catch (SecurityException e){
-                System.out.println("Недостаточно прав для чтения файла " + path);
-            } catch (ScriptRecursionException e) {
-                System.out.println(e.getMessage());
-            } catch (IOException e) {
-                System.out.println("Ошибка ввода/вывода");
-            } catch (InvalidPathException e){
-                System.out.println("Проверьте путь к файлу. В нём не должно быть лишних символов");
+        File file = new File(path);
+        if (!file.exists()) {
+            System.out.printf("Данный файл (path: %s) не существует или не был найден%n", path);
+            return;
+        }
+        if (!file.canRead()) {
+            System.out.printf("Данный файл(Путь: %s) не может быть прочитан %n", path);
+            return;
+        }
+        ArrayList<String> commands = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            reader.lines().filter(Objects::nonNull).filter((line) -> !line.isEmpty()).forEach(commands::add);
+            for (String cmd : commands) {
+                if (cmd.contains("execute_script")) {
+                    System.out.printf("Файл скрипта не может рекурсивно содержать комманду %s%n", "execute_script");
+                    return;
+                }
             }
+        } catch (IOException e) {
+            System.out.printf("Ошибка чтения файла (Путь: %s)%n", path);
+            return;
+        }
+        for (String cmd : commands) {
+            String command = cmd.split(" ")[0];
+            ConsoleApp.commandList.get(command).execute(cmd.substring(command.length()).replaceAll("\\s", ""));
         }
     }
 
